@@ -8,6 +8,6 @@ import java.util.UUID;
 public class LoggingNotificationDispatcher implements NotificationDispatcher {
     @Override public DeliveryResult send(AlertNotification notification) {
         if (notification.recipient() == null || notification.recipient().isBlank()) return new DeliveryResult(false, null, "recipient is empty");
-        return new DeliveryResult(true, UUID.randomUUID().toString(), null);
+        return new DeliveryResult(false, null, "notification provider is not configured for channel " + notification.channel());
     }
 }

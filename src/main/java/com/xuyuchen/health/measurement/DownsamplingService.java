@@ -19,14 +19,25 @@ public class DownsamplingService {
         Map<Long, Bucket> buckets = new LinkedHashMap<>();
         for (Measurement measurement : records) {
             long bucket = (measurement.eventTime().getEpochSecond() / seconds) * seconds;
-            buckets.computeIfAbsent(bucket, key -> new Bucket(Instant.ofEpochSecond(key))).add(measurement.value());
+            buckets.computeIfAbsent(bucket, key -> new Bucket(Instant.ofEpochSecond(key))).add(measurement);
         }
         return buckets.values().stream().sorted(Comparator.comparing(Bucket::time)).limit(Math.max(1, limit)).map(Bucket::point).toList();
     }
     private static final class Bucket {
         private final Instant time; private int count; private double sum; private double min = Double.POSITIVE_INFINITY; private double max = Double.NEGATIVE_INFINITY; private double last;
         private Bucket(Instant time) { this.time = time; }
-        private void add(double value) { count++; sum += value; min = Math.min(min, value); max = Math.max(max, value); last = value; }
+        private Instant lastEventTime;
+        private long lastSequence;
+        private void add(Measurement measurement) {
+            double value = measurement.value();
+            count++; sum += value; min = Math.min(min, value); max = Math.max(max, value);
+            if (lastEventTime == null || measurement.eventTime().isAfter(lastEventTime)
+                    || (measurement.eventTime().equals(lastEventTime) && measurement.sequence() > lastSequence)) {
+                last = value;
+                lastEventTime = measurement.eventTime();
+                lastSequence = measurement.sequence();
+            }
+        }
         private Instant time() { return time; }
         private DownsamplePoint point() { return new DownsamplePoint(time, count, min, max, sum / count, last); }
     }

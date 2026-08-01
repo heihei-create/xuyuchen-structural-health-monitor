@@ -1,6 +1,7 @@
 package com.xuyuchen.health.alert;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
@@ -14,7 +15,7 @@ public class AlertOperationsController {
     public AlertOperationsController(AlertSilenceService silence, AlertNotificationService notifications) { this.silence = silence; this.notifications = notifications; }
     public record SilenceRequest(@NotBlank String operator, @NotBlank String reason, long durationSeconds) {}
     @PostMapping("/{fingerprint}/silence")
-    public AlertSilence silence(@PathVariable String projectId, @PathVariable String fingerprint, @RequestBody SilenceRequest req) {
+    public AlertSilence silence(@PathVariable String projectId, @PathVariable String fingerprint, @Valid @RequestBody SilenceRequest req) {
         return silence.silence(projectId, fingerprint, req.operator(), req.reason(), Duration.ofSeconds(Math.max(1, req.durationSeconds())));
     }
     @DeleteMapping("/{fingerprint}/silence")

@@ -15,5 +15,5 @@ public class DeviceTokenController {
         return Map.of("token", service.issue(projectId, deviceId, seconds), "expiresIn", seconds);
     }
     @DeleteMapping("/{token}")
-    public void revoke(@PathVariable String token) { service.revoke(token); }
+    public void revoke(@PathVariable String projectId, @PathVariable String deviceId, @PathVariable String token) { service.revoke(projectId, deviceId, token); }
 }

@@ -17,7 +17,11 @@ public class DeviceCommandService {
         DeviceCommand value = new DeviceCommand(UUID.randomUUID(), projectId, deviceId, command, payload, Instant.now(), null, null);
         commands.add(value); return value;
     }
-    public DeviceCommand ack(UUID id) { return replace(id, find(id).ack()); }
+    public DeviceCommand ack(String projectId, String deviceId, UUID id) {
+        DeviceCommand command = find(id);
+        if (!command.projectId().equals(projectId) || !command.deviceId().equals(deviceId)) throw new IllegalArgumentException("command not found");
+        return replace(id, command.ack());
+    }
     public DeviceCommand fail(UUID id, String reason) { return replace(id, find(id).fail(reason)); }
     public List<DeviceCommand> list(String projectId, String deviceId) { return commands.stream().filter(c -> c.projectId().equals(projectId) && c.deviceId().equals(deviceId)).toList(); }
     private DeviceCommand find(UUID id) { return commands.stream().filter(c -> c.id().equals(id)).findFirst().orElseThrow(() -> new IllegalArgumentException("command not found")); }

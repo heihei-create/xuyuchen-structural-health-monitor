@@ -9,6 +9,8 @@ public class MeasurementBatchService {
     private final MeasurementIngestionService ingestion;
     public MeasurementBatchService(MeasurementIngestionService ingestion) { this.ingestion = ingestion; }
     public BatchResult ingest(List<Measurement> measurements) {
+        if (measurements == null || measurements.isEmpty()) throw new IllegalArgumentException("measurements must not be empty");
+        if (measurements.size() > 1000) throw new IllegalArgumentException("batch size must not exceed 1000");
         int accepted = 0, duplicates = 0, rejected = 0;
         for (Measurement measurement : measurements) {
             try {

@@ -26,5 +26,5 @@ public class IngestionQueue {
         Queue<Measurement> queue = queues.get(projectId);
         return queue == null ? null : queue.poll();
     }
-    public int size(String projectId) { Queue<Measurement> queue = queues.get(projectId); return queue == null ? 0 : queue.size(); }
+    public synchronized int size(String projectId) { Queue<Measurement> queue = queues.get(projectId); return queue == null ? 0 : queue.size(); }
 }

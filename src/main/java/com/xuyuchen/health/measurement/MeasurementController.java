@@ -3,6 +3,7 @@ package com.xuyuchen.health.measurement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import com.xuyuchen.health.device.DeviceTokenService;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,12 +14,14 @@ public class MeasurementController {
     private final MeasurementIngestionService ingestion;
     private final MeasurementQueryService query;
     private final WindowAggregator windows;
-    public MeasurementController(MeasurementIngestionService ingestion, MeasurementQueryService query, WindowAggregator windows) {
-        this.ingestion = ingestion; this.query = query; this.windows = windows;
+    private final DeviceTokenService deviceTokens;
+    public MeasurementController(MeasurementIngestionService ingestion, MeasurementQueryService query, WindowAggregator windows, DeviceTokenService deviceTokens) {
+        this.ingestion = ingestion; this.query = query; this.windows = windows; this.deviceTokens = deviceTokens;
     }
     @PostMapping
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public MeasurementDtos.IngestResponse ingest(@PathVariable String projectId, @Valid @RequestBody MeasurementDtos.IngestRequest req) {
+    public MeasurementDtos.IngestResponse ingest(@PathVariable String projectId, @RequestHeader("X-Device-Token") String token, @Valid @RequestBody MeasurementDtos.IngestRequest req) {
+        if (!deviceTokens.valid(token, projectId, req.deviceId())) throw new IllegalArgumentException("invalid device token");
         return ingestion.ingest(req.toMeasurement(projectId));
     }
     @GetMapping("/devices/{deviceId}/latest")

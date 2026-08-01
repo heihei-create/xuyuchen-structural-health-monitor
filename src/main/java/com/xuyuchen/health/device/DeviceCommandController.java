@@ -15,9 +15,9 @@ public class DeviceCommandController {
     public record CommandRequest(@NotBlank String command, String payload) {}
     @PostMapping
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public DeviceCommand create(@PathVariable String projectId, @PathVariable String deviceId, @RequestBody CommandRequest req) { return service.create(projectId, deviceId, req.command(), req.payload()); }
+    public DeviceCommand create(@PathVariable String projectId, @PathVariable String deviceId, @jakarta.validation.Valid @RequestBody CommandRequest req) { return service.create(projectId, deviceId, req.command(), req.payload()); }
     @PostMapping("/{commandId}/ack")
-    public DeviceCommand ack(@PathVariable UUID commandId) { return service.ack(commandId); }
+    public DeviceCommand ack(@PathVariable String projectId, @PathVariable String deviceId, @PathVariable UUID commandId) { return service.ack(projectId, deviceId, commandId); }
     @GetMapping
     public List<DeviceCommand> list(@PathVariable String projectId, @PathVariable String deviceId) { return service.list(projectId, deviceId); }
 }

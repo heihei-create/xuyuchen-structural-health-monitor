@@ -9,13 +9,19 @@ public class WindowAggregate {
     private double min = Double.POSITIVE_INFINITY;
     private double max = Double.NEGATIVE_INFINITY;
     private double last;
+    private long lastSequence;
     private Instant firstTime;
     private Instant lastTime;
     public WindowAggregate(WindowKey key) { this.key = key; }
     public synchronized void add(Measurement measurement) {
-        count++; sum += measurement.value(); min = Math.min(min, measurement.value()); max = Math.max(max, measurement.value()); last = measurement.value();
+        count++; sum += measurement.value(); min = Math.min(min, measurement.value()); max = Math.max(max, measurement.value());
         if (firstTime == null || measurement.eventTime().isBefore(firstTime)) firstTime = measurement.eventTime();
-        if (lastTime == null || measurement.eventTime().isAfter(lastTime)) lastTime = measurement.eventTime();
+        if (lastTime == null || measurement.eventTime().isAfter(lastTime)
+                || (measurement.eventTime().equals(lastTime) && measurement.sequence() > lastSequence)) {
+            last = measurement.value();
+            lastSequence = measurement.sequence();
+            lastTime = measurement.eventTime();
+        }
     }
     public WindowKey key() { return key; }
     public synchronized int count() { return count; }

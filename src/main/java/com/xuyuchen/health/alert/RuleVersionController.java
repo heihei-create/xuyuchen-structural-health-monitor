@@ -1,6 +1,7 @@
 package com.xuyuchen.health.alert;
 
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -10,7 +11,7 @@ public class RuleVersionController {
     private final RuleVersionService service;
     public RuleVersionController(RuleVersionService service) { this.service = service; }
     @PostMapping("/{ruleId}")
-    public AlertRule publish(@PathVariable String projectId, @PathVariable String ruleId, @RequestBody AlertRule rule) {
+    public AlertRule publish(@PathVariable String projectId, @PathVariable String ruleId, @Valid @RequestBody AlertRule rule) {
         if (!rule.projectId().equals(projectId) || !rule.ruleId().equals(ruleId)) throw new IllegalArgumentException("rule identity mismatch");
         return service.publish(rule);
     }

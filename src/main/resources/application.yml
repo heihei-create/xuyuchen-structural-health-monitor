@@ -9,11 +9,27 @@ spring:
 server:
   port: ${PORT:8082}
 management:
+  health:
+    redis:
+      enabled: ${HEALTH_EXTERNAL_HEALTH_ENABLED:false}
+    kafka:
+      enabled: ${HEALTH_EXTERNAL_HEALTH_ENABLED:false}
   endpoints:
     web:
       exposure:
         include: health,info,metrics
 health:
+  auth:
+    enabled: ${HEALTH_AUTH_ENABLED:true}
+    admin-token: ${HEALTH_ADMIN_TOKEN:}
+    project-tokens: ${HEALTH_PROJECT_TOKENS:}
+  websocket:
+    allowed-origins: ${HEALTH_WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8082}
   messaging: ${HEALTH_MESSAGING:memory}
   storage: ${HEALTH_STORAGE:memory}
   latest-store: ${HEALTH_LATEST_STORE:memory}
+  clickhouse:
+    host: ${CLICKHOUSE_HOST:localhost}
+    port: ${CLICKHOUSE_PORT:8123}
+    connect-timeout: ${CLICKHOUSE_CONNECT_TIMEOUT:2s}
+    read-timeout: ${CLICKHOUSE_READ_TIMEOUT:5s}

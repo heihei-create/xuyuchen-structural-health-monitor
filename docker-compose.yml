@@ -8,12 +8,41 @@ services:
       CLICKHOUSE_HOST: clickhouse
       HEALTH_MESSAGING: kafka
       HEALTH_STORAGE: clickhouse
-    depends_on: [kafka, redis, clickhouse]
+      HEALTH_LATEST_STORE: redis
+      HEALTH_EXTERNAL_HEALTH_ENABLED: "true"
+      HEALTH_ADMIN_TOKEN: ${HEALTH_ADMIN_TOKEN:?set HEALTH_ADMIN_TOKEN before starting}
+      HEALTH_PROJECT_TOKENS: ${HEALTH_PROJECT_TOKENS:?set HEALTH_PROJECT_TOKENS before starting}
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
   redis:
     image: redis:7-alpine
+    volumes: ["health-redis:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   clickhouse:
     image: clickhouse/clickhouse-server:24.8
     ports: ["8123:8123"]
+    volumes:
+      - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - health-clickhouse:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query='SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
   kafka:
     image: bitnami/kafka:3.8
     environment:
@@ -24,3 +53,13 @@ services:
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
       ALLOW_PLAINTEXT_LISTENER: yes
+    volumes: ["health-kafka:/bitnami/kafka"]
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+volumes:
+  health-redis:
+  health-clickhouse:
+  health-kafka:

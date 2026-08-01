@@ -12,7 +12,8 @@ Realtime backend for structural and laboratory sensor data. It models the data p
 - Alert silence, notification queue and escalation policy
 - Redis latest-value adapter and ClickHouse JSONEachRow sink behind configuration
 - Kafka event publisher behind configuration
-- STOMP WebSocket endpoint at /ws
+- Project-scoped API tokens and admin credentials are enforced at the HTTP boundary
+- STOMP WebSocket endpoint at /ws/{projectId}, bound to the authenticated project
 
 ## Run
 
@@ -31,3 +32,9 @@ The WebSocket topics are:
 
     /topic/projects/{projectId}/measurements
     /topic/projects/{projectId}/alerts
+
+Set `HEALTH_ADMIN_TOKEN` and `HEALTH_PROJECT_TOKENS=demo-project=local-project-token` for a local smoke run. Production must supply its own credentials; the default profile is fail-closed when they are absent.
+
+WebSocket clients connect to `/ws/{projectId}` with `X-Project-Token` or an `access_token` query parameter; subscriptions are bound to that project.
+
+The default profile is intentionally self-contained for development. Compose switches to Redis latest values, Kafka delivery and ClickHouse raw measurement storage; ClickHouse is initialized from `docker/clickhouse/init.sql` and retains raw data for 365 days.

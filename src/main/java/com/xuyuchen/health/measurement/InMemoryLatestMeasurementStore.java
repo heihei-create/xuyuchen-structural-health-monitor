@@ -2,6 +2,7 @@ package com.xuyuchen.health.measurement;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +11,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @Repository
 @Primary
+@ConditionalOnProperty(name = "health.latest-store", havingValue = "memory", matchIfMissing = true)
 public class InMemoryLatestMeasurementStore implements LatestMeasurementStore {
     private final ConcurrentMap<String, Measurement> latest = new ConcurrentHashMap<>();
     private String key(String projectId, String deviceId, String channelId) { return projectId + ":" + deviceId + ":" + channelId; }

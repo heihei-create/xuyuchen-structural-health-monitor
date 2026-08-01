@@ -43,4 +43,10 @@ public class AlertStateMachine {
     }
     public String fingerprint() { return fingerprint; }
     public AlertStatus status() { return status; }
+    public synchronized AlertStateMachine copy() {
+        AlertStateMachine copy = new AlertStateMachine(rule, deviceId);
+        copy.status = status; copy.violations = violations; copy.recoveries = recoveries;
+        copy.firstTriggeredAt = firstTriggeredAt; copy.lastSeenAt = lastSeenAt; copy.lastValue = lastValue;
+        return copy;
+    }
 }
