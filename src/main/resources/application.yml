@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: health-monitor
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+server:
+  port: ${PORT:8082}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+health:
+  messaging: ${HEALTH_MESSAGING:memory}
+  storage: ${HEALTH_STORAGE:memory}
+  latest-store: ${HEALTH_LATEST_STORE:memory}
