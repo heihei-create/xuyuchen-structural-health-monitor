@@ -38,4 +38,22 @@ class AlertStateMachineTest {
 
         assertThrows(IllegalStateException.class, machine::ack);
     }
+
+    @Test
+    void duplicateOrLateSequencedMeasurementDoesNotAdvanceDebounceState() {
+        AlertStateMachine machine = new AlertStateMachine(rule, "d");
+        Instant first = Instant.parse("2026-08-01T00:00:01Z");
+        machine.evaluate(101, first, 10);
+
+        AlertEvent duplicate = machine.evaluate(102, first, 10);
+        assertEquals(1, duplicate.violationCount());
+        assertEquals(AlertStatus.NORMAL, duplicate.status());
+
+        AlertEvent late = machine.evaluate(102, Instant.parse("2026-08-01T00:00:00Z"), 9);
+        assertEquals(1, late.violationCount());
+        assertEquals(AlertStatus.NORMAL, late.status());
+
+        AlertEvent next = machine.evaluate(102, Instant.parse("2026-08-01T00:00:02Z"), 11);
+        assertEquals(AlertStatus.TRIGGERED, next.status());
+    }
 }

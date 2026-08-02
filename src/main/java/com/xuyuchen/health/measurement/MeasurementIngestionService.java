@@ -38,7 +38,7 @@ public class MeasurementIngestionService {
             if (!outOfOrder) {
                 devices.seen(measurement.projectId(), measurement.deviceId(), measurement.eventTime());
                 publisher.publish(measurement);
-                AlertEvent alert = alerts.evaluate(measurement.projectId(), measurement.deviceId(), measurement.channelId(), measurement.value(), measurement.eventTime());
+                AlertEvent alert = alerts.evaluate(measurement.projectId(), measurement.deviceId(), measurement.channelId(), measurement.value(), measurement.eventTime(), measurement.sequence());
                 if (alert != null && alert.status() != com.xuyuchen.health.alert.AlertStatus.NORMAL) metrics.alert();
             }
             dedup.commit(reservation);

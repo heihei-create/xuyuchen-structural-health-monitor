@@ -14,12 +14,21 @@ public class AlertStateMachine {
     private Instant firstTriggeredAt;
     private Instant lastSeenAt;
     private double lastValue;
+    private long lastSequence = Long.MIN_VALUE;
     public AlertStateMachine(AlertRule rule, String deviceId) {
         this.rule = rule; this.deviceId = deviceId; this.projectId = rule.projectId(); this.channelId = rule.channelId();
         this.fingerprint = AlertFingerprint.of(projectId, deviceId, channelId, rule.ruleId(), rule.version());
     }
     public synchronized AlertEvent evaluate(double value, Instant eventTime) {
+        return evaluateInternal(value, eventTime, Long.MIN_VALUE, false);
+    }
+    public synchronized AlertEvent evaluate(double value, Instant eventTime, long sequence) {
+        return evaluateInternal(value, eventTime, sequence, true);
+    }
+    private AlertEvent evaluateInternal(double value, Instant eventTime, long sequence, boolean ordered) {
+        if (ordered && lastSeenAt != null && (eventTime.isBefore(lastSeenAt) || (eventTime.equals(lastSeenAt) && sequence <= lastSequence))) return snapshot();
         lastValue = value; lastSeenAt = eventTime;
+        if (ordered) lastSequence = sequence;
         if (rule.violates(value)) {
             violations++; recoveries = 0;
             if (status == AlertStatus.NORMAL || status == AlertStatus.RECOVERED) {
@@ -47,6 +56,7 @@ public class AlertStateMachine {
         AlertStateMachine copy = new AlertStateMachine(rule, deviceId);
         copy.status = status; copy.violations = violations; copy.recoveries = recoveries;
         copy.firstTriggeredAt = firstTriggeredAt; copy.lastSeenAt = lastSeenAt; copy.lastValue = lastValue;
+        copy.lastSequence = lastSequence;
         return copy;
     }
 }

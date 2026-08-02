@@ -20,21 +20,26 @@ public class AlertService {
         this.rules = rules; this.alerts = alerts; this.states = states; this.publisher = publisher; this.escalation = escalation;
     }
     public AlertEvent evaluate(String projectId, String deviceId, String channelId, double value, Instant eventTime) {
-        for (AlertRule rule : rules.byChannel(projectId, channelId)) evaluateRule(rule, deviceId, value, eventTime);
-        return alerts.findByProject(projectId).stream().filter(e -> e.deviceId().equals(deviceId) && e.channelId().equals(channelId)).reduce((a, b) -> b).orElse(null);
+        return evaluate(projectId, deviceId, channelId, value, eventTime, Long.MIN_VALUE);
     }
-    private void evaluateRule(AlertRule rule, String deviceId, double value, Instant eventTime) {
+    public AlertEvent evaluate(String projectId, String deviceId, String channelId, double value, Instant eventTime, long sequence) {
+        AlertEvent latest = null;
+        for (AlertRule rule : rules.byChannel(projectId, channelId)) latest = evaluateRule(rule, deviceId, value, eventTime, sequence);
+        return latest;
+    }
+    private AlertEvent evaluateRule(AlertRule rule, String deviceId, double value, Instant eventTime, long sequence) {
         String fingerprint = AlertFingerprint.of(rule.projectId(), deviceId, rule.channelId(), rule.ruleId(), rule.version());
         synchronized (locks.computeIfAbsent(fingerprint, k -> new Object())) {
             AlertStateMachine current = states.find(fingerprint).orElseGet(() -> new AlertStateMachine(rule, deviceId));
             AlertStateMachine state = current.copy();
             AlertStatus before = current.status();
-            AlertEvent event = state.evaluate(value, eventTime);
+            AlertEvent event = sequence == Long.MIN_VALUE ? state.evaluate(value, eventTime) : state.evaluate(value, eventTime, sequence);
             if (before != event.status()) {
                 publisher.publish(event);
                 if (event.status() == AlertStatus.TRIGGERED) escalation.notify(event);
             }
             states.save(state); alerts.save(event);
+            return event;
         }
     }
     public AlertEvent ack(String projectId, String fingerprint) {

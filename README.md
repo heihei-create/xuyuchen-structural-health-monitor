@@ -7,6 +7,7 @@ Realtime backend for structural and laboratory sensor data. It models the data p
 - Project, device, channel and device command lifecycle
 - MQTT/HTTP-shaped batch decoder with device and channel validation
 - Message deduplication and event-time ordering
+- Sequence-aware alert evaluation prevents duplicate or late measurements from advancing debounce state
 - Sliding windows, trend downsampling and raw history queries
 - Threshold alert state machine with debounce, recovery and acknowledgement
 - Alert silence, notification queue and escalation policy
