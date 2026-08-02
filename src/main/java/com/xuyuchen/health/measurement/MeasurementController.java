@@ -18,6 +18,28 @@ public class MeasurementController {
     public MeasurementController(MeasurementIngestionService ingestion, MeasurementQueryService query, WindowAggregator windows, DeviceTokenService deviceTokens) {
         this.ingestion = ingestion; this.query = query; this.windows = windows; this.deviceTokens = deviceTokens;
     }
+
+    public record WindowResponse(
+            String projectId,
+            String deviceId,
+            String channelId,
+            long windowStartEpochSecond,
+            int seconds,
+            int count,
+            double average,
+            double min,
+            double max,
+            double last,
+            Instant firstTime,
+            Instant lastTime
+    ) {
+        static WindowResponse from(WindowAggregate aggregate) {
+            WindowKey key = aggregate.key();
+            return new WindowResponse(key.projectId(), key.deviceId(), key.channelId(), key.windowStartEpochSecond(), key.seconds(),
+                    aggregate.count(), aggregate.average(), aggregate.min(), aggregate.max(), aggregate.last(),
+                    aggregate.firstTime(), aggregate.lastTime());
+        }
+    }
     @PostMapping
     @ResponseStatus(HttpStatus.ACCEPTED)
     public MeasurementDtos.IngestResponse ingest(@PathVariable String projectId, @RequestHeader("X-Device-Token") String token, @Valid @RequestBody MeasurementDtos.IngestRequest req) {
@@ -31,7 +53,7 @@ public class MeasurementController {
         return query.query(projectId, deviceId, channelId, from, to, limit);
     }
     @GetMapping("/devices/{deviceId}/channels/{channelId}/windows")
-    public List<WindowAggregate> windows(@PathVariable String projectId, @PathVariable String deviceId, @PathVariable String channelId, @RequestParam(defaultValue = "60") int seconds) {
-        return windows.list(projectId, deviceId, channelId, seconds);
+    public List<WindowResponse> windows(@PathVariable String projectId, @PathVariable String deviceId, @PathVariable String channelId, @RequestParam(defaultValue = "60") int seconds) {
+        return windows.list(projectId, deviceId, channelId, seconds).stream().map(WindowResponse::from).toList();
     }
 }

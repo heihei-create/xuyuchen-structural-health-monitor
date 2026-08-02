@@ -59,6 +59,7 @@ public class ProjectAuthFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String projectPrefix = request.getContextPath() + "/api/v1/projects/" + projectId;
         if (path.startsWith(projectPrefix + "/measurements") || path.startsWith(projectPrefix + "/ingestion")) return "GET".equalsIgnoreCase(request.getMethod()) || "POST".equalsIgnoreCase(request.getMethod());
+        if (path.startsWith(projectPrefix + "/trends")) return "GET".equalsIgnoreCase(request.getMethod());
         if (path.startsWith(projectPrefix + "/latest") || path.startsWith(projectPrefix + "/alerts")) return "GET".equalsIgnoreCase(request.getMethod());
         return false;
     }
